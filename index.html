@@ -294,6 +294,10 @@ $("tplIn").onchange=async e=>{
 };
 $("tplReset").onclick=()=>{st.tpl=ORIG;st.custom=false;$("tplInfo").textContent="Modulo: Bollettino TPS vuoto.pdf";$("tplReset").hidden=true;renderPreview();};
 
+function clearAll(msg){
+  st.files=[];st.page=0;renderFiles();renderPreview();
+  setStatus(msg+" L'elenco è stato svuotato: carica i prossimi rapporti.","ok");
+}
 $("makeBtn").onclick=async()=>{
   const btn=$("makeBtn");if(!st.tpl){setStatus("Modulo vuoto non caricato.","err");return;}btn.disabled=true;setStatus("Creo il PDF…");
   try{
@@ -303,13 +307,13 @@ $("makeBtn").onclick=async()=>{
     const name=`Bollettini_${st.fmt}_${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}.pdf`;
     const dl=window.claude&&window.claude.use?await window.claude.use("downloads"):null;
     if(dl){
-      try{await dl.save({filename:name,data:new Blob([bytes],{type:"application/pdf"})});setStatus(`Salvato ${name} con ${labels.length} bollettin${labels.length===1?"o":"i"}.`,"ok");}
+      try{await dl.save({filename:name,data:new Blob([bytes],{type:"application/pdf"})});clearAll(`Salvato ${name} con ${labels.length} bollettin${labels.length===1?"o":"i"}.`);}
       catch(err){setStatus(err&&err.code==="declined"?"Salvataggio annullato.":"Salvataggio non riuscito: "+(err&&err.message||err),err&&err.code==="declined"?"":"err");}
     }else{
       const url=URL.createObjectURL(new Blob([bytes],{type:"application/pdf"}));
       const a=document.createElement("a");a.href=url;a.download=name;document.body.append(a);a.click();a.remove();
       setTimeout(()=>URL.revokeObjectURL(url),5000);
-      setStatus(`Creato ${name}.`,"ok");
+      clearAll(`Scaricato ${name} con ${labels.length} bollettin${labels.length===1?"o":"i"}.`);
     }
   }catch(e){setStatus("Errore nella creazione: "+(e.message||e),"err");}
   btn.disabled=!st.files.length;
