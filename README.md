@@ -15,7 +15,11 @@ Pagina web che sovrappone i rapporti (PDF) al modulo del rapporto di lavoro TPS 
 
 ## Regola posizione e modulo
 
-Si apre cliccando la freccetta in fondo al passo 2. Normalmente non serve: i valori sono già tarati sul modulo. Serve in due casi.
+Questo riquadro è **nascosto** ai colleghi: i valori sono già tarati sul modulo e normalmente non serve.
+
+Per farlo comparire, aggiungi `#regola` in fondo al link: `https://goccia-sa.github.io/Bollettini-TPS/#regola`. Senza `#regola` la pagina usa sempre i valori predefiniti, anche se in precedenza qualcuno li aveva modificati nel suo browser.
+
+Serve in due casi.
 
 ### 1. Il testo non cade al posto giusto
 
@@ -29,7 +33,7 @@ L'anteprima si aggiorna subito mentre cambi il numero. Esempio: se le date stann
 I millimetri si riferiscono al modulo a grandezza piena (un po' più grande del bollettino A5 stampato): prova, guarda l'anteprima e aggiusta.
 
 - **Ripristina posizione** riporta i valori di partenza: 24.8 (orizzontale) e 16.6 (verticale).
-- La correzione resta salvata **solo nel browser di chi la fa**: non cambia per gli altri colleghi.
+- La correzione resta salvata **solo nel browser di chi la fa** e vale solo aprendo il link con `#regola`. Per renderla definitiva per tutti, vanno cambiati i valori predefiniti (vedi sotto).
 
 ### 2. Usare un altro modulo vuoto
 

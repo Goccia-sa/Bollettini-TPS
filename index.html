@@ -130,10 +130,10 @@ canvas{max-width:100%;max-height:78vh;width:auto;height:auto;background:var(--pa
         <button class="primary" id="makeBtn" disabled>Scarica PDF bollettini</button>
         <p class="status" id="status" aria-live="polite"></p>
 
-        <details class="adv" id="adv">
+        <details class="adv" id="adv" hidden>
           <summary>Regola posizione e modulo</summary>
           <div class="step">
-            <p class="hint">Sposta il testo del rapporto sul modulo. Valori positivi: verso destra e verso l'alto.</p>
+            <p class="hint">Sposta il testo del rapporto sul modulo. Valori positivi: verso destra e verso l'alto. Le modifiche valgono solo in questo browser: per renderle definitive per tutti vanno cambiati i valori predefiniti del sito.</p>
             <div class="offs">
               <label for="dx">Orizzontale (mm)<input type="number" id="dx" step="0.5"></label>
               <label for="dy">Verticale (mm)<input type="number" id="dy" step="0.5"></label>
@@ -182,8 +182,16 @@ const st={files:[],tpl:null,tplName:"Bollettino TPS vuoto.pdf",custom:false,page
 function b64ToBytes(b){const s=atob(b),u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return u;}
 let ORIG=null;
 
-try{const s=JSON.parse(localStorage.getItem("bollettini-off-v2")||"null");if(s&&isFinite(s.dx)&&isFinite(s.dy)){st.dx=s.dx;st.dy=s.dy;}}catch(e){}
-$("dx").value=st.dx;$("dy").value=st.dy;
+function isAdmin(){return location.hash==="#regola";}
+function applyMode(){
+  const adm=isAdmin(); $("adv").hidden=!adm; if(adm)$("adv").open=true;
+  st.dx=DEF.dx;st.dy=DEF.dy;
+  if(adm){try{const s=JSON.parse(localStorage.getItem("bollettini-off-v2")||"null");if(s&&isFinite(s.dx)&&isFinite(s.dy)){st.dx=s.dx;st.dy=s.dy;}}catch(e){}}
+  else if(st.custom){st.tpl=ORIG;st.custom=false;$("tplInfo").textContent="Modulo: Bollettino TPS vuoto.pdf";$("tplReset").hidden=true;}
+  $("dx").value=st.dx;$("dy").value=st.dy;
+}
+applyMode();
+window.addEventListener("hashchange",()=>{applyMode();renderPreview();});
 try{const f=localStorage.getItem("bollettini-per");if(f==="1"||f==="2")st.fmt=f;}catch(e){}
 $("fmt"+st.fmt).checked=true;
 
