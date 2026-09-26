@@ -1,6 +1,6 @@
 # Bollettini TPS
 
-Pagina web che sovrappone i rapporti (PDF) al modulo del rapporto di lavoro TPS vuoto e crea un unico PDF, in formato A5 (o A4), da stampare o inviare.
+Pagina web che sovrappone i rapporti (PDF) al modulo del rapporto di lavoro TPS vuoto e crea un unico PDF di fogli A4 verticali, con uno o due bollettini A5 per foglio, da stampare o inviare.
 
 - I PDF vengono elaborati solo nel browser di chi usa la pagina: nessun file viene caricato su GitHub o altrove.
 - `index.html`: la pagina.
@@ -10,8 +10,8 @@ Pagina web che sovrappone i rapporti (PDF) al modulo del rapporto di lavoro TPS 
 
 1. Trascina i PDF dei rapporti nel riquadro (anche più file; ogni pagina diventa un bollettino).
 2. Controlla l'anteprima a destra (frecce ‹ › per scorrere le pagine).
-3. Scegli il formato **A5** (predefinito) o **A4** e clicca **Scarica PDF**.
-4. In stampa scegli carta **A5** e **Dimensioni effettive / 100%**.
+3. Scegli **1 per foglio** (bollettino nella metà alta del foglio A4) o **2 per foglio** (due bollettini uno sotto l'altro) e clicca **Scarica PDF**.
+4. In stampa scegli carta **A4 verticale** e **Dimensioni effettive / 100%**. La linea tratteggiata a metà foglio indica dove tagliare per avere il bollettino A5.
 
 ## Regola posizione e modulo
 
@@ -26,7 +26,7 @@ Il rapporto è come un foglio trasparente con solo il testo, appoggiato sopra il
 
 L'anteprima si aggiorna subito mentre cambi il numero. Esempio: se le date stanno 2 mm troppo in basso rispetto alle caselle Lu–Do, porta il verticale da 16.6 a 18.6.
 
-I millimetri si riferiscono al modulo a grandezza piena (un po' più grande dell'A5): prova, guarda l'anteprima e aggiusta.
+I millimetri si riferiscono al modulo a grandezza piena (un po' più grande del bollettino A5 stampato): prova, guarda l'anteprima e aggiusta.
 
 - **Ripristina posizione** riporta i valori di partenza: 24.8 (orizzontale) e 16.6 (verticale).
 - La correzione resta salvata **solo nel browser di chi la fa**: non cambia per gli altri colleghi.

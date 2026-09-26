@@ -68,12 +68,12 @@ button{font-family:var(--sans);font-size:14px;cursor:pointer;border-radius:6px}
 .pvhead .who{font-size:14px;color:var(--ink);font-weight:500}
 .nav{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:13px;color:var(--muted)}
 .stage{background:var(--bg);border-radius:8px;padding:14px;display:grid;place-items:center;min-height:300px}
-canvas{max-width:100%;height:auto;background:var(--paper);box-shadow:var(--shadow);border-radius:2px;display:block}
+canvas{max-width:100%;max-height:78vh;width:auto;height:auto;background:var(--paper);box-shadow:var(--shadow);border-radius:2px;display:block}
 .fmt{border:0;margin:0;padding:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.fmt legend{font-size:13px;color:var(--muted);float:left;margin-right:6px}
+.fmt legend{font-size:13px;color:var(--muted);float:left;margin-right:6px;padding:0}
 .opt{flex-direction:row;cursor:pointer}
 .opt input{position:absolute;opacity:0;pointer-events:none}
-.opt span{display:inline-block;padding:6px 14px;border:1px solid var(--line);border-radius:6px;font-family:var(--mono);font-size:13px;color:var(--ink)}
+.opt span{display:inline-block;padding:6px 12px;border:1px solid var(--line);border-radius:6px;font-size:13.5px;color:var(--ink)}
 .opt input:checked+span{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:500}
 .opt input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
 .adv{border-top:1px solid var(--line);padding-top:12px}
@@ -102,7 +102,7 @@ canvas{max-width:100%;height:auto;background:var(--paper);box-shadow:var(--shado
   <header>
     <div>
       <h1>Bollettini <span>TPS</span></h1>
-      <p class="sub">Unisce i rapporti al modulo del rapporto di lavoro vuoto: ogni pagina diventa un bollettino A5 pronto da stampare o inviare.</p>
+      <p class="sub">Unisce i rapporti al modulo del rapporto di lavoro vuoto: ogni pagina diventa un bollettino A5, su fogli A4 pronti da stampare o inviare.</p>
     </div>
     <p class="priv">I PDF vengono elaborati solo nel tuo browser e non vengono caricati da nessuna parte.</p>
   </header>
@@ -122,10 +122,11 @@ canvas{max-width:100%;height:auto;background:var(--paper);box-shadow:var(--shado
 
       <section class="panel step" aria-labelledby="s2">
         <h2 id="s2"><b>2</b> Crea il bollettino</h2>
-        <fieldset class="fmt"><legend>Formato</legend>
-          <label class="opt"><input type="radio" name="fmt" id="fmtA5" value="A5" checked><span>A5</span></label>
-          <label class="opt"><input type="radio" name="fmt" id="fmtA4" value="A4"><span>A4</span></label>
+        <fieldset class="fmt"><legend>Su foglio A4</legend>
+          <label class="opt"><input type="radio" name="fmt" id="fmt1" value="1" checked><span>1 per foglio</span></label>
+          <label class="opt"><input type="radio" name="fmt" id="fmt2" value="2"><span>2 per foglio</span></label>
         </fieldset>
+        <p class="hint">Bollettino in formato A5. Stampa su A4 verticale con dimensioni effettive (100%); la linea tratteggiata indica dove tagliare.</p>
         <button class="primary" id="makeBtn" disabled>Scarica PDF bollettini</button>
         <p class="status" id="status" aria-live="polite"></p>
 
@@ -172,18 +173,18 @@ canvas{max-width:100%;height:auto;background:var(--paper);box-shadow:var(--shado
 (function(){
 
 const MM=72/25.4, DEF={dx:24.8,dy:16.6};
-const SIZES={A5:[595.28,419.53],A4:[841.89,595.28]};
+
 const {PDFDocument,degrees}=PDFLib;
 try{pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";}catch(e){}
 
 const $=id=>document.getElementById(id);
-const st={files:[],tpl:null,tplName:"Bollettino TPS vuoto.pdf",custom:false,page:0,total:0,dx:DEF.dx,dy:DEF.dy,fmt:"A5"};
+const st={files:[],tpl:null,tplName:"Bollettino TPS vuoto.pdf",custom:false,page:0,total:0,dx:DEF.dx,dy:DEF.dy,fmt:"1"};
 function b64ToBytes(b){const s=atob(b),u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return u;}
 let ORIG=null;
 
 try{const s=JSON.parse(localStorage.getItem("bollettini-off-v2")||"null");if(s&&isFinite(s.dx)&&isFinite(s.dy)){st.dx=s.dx;st.dy=s.dy;}}catch(e){}
 $("dx").value=st.dx;$("dy").value=st.dy;
-try{const f=localStorage.getItem("bollettini-fmt");if(SIZES[f])st.fmt=f;}catch(e){}
+try{const f=localStorage.getItem("bollettini-per");if(f==="1"||f==="2")st.fmt=f;}catch(e){}
 $("fmt"+st.fmt).checked=true;
 
 function norm(a){return((a%360)+360)%360;}
@@ -192,39 +193,46 @@ function place(page,emb,rot,ox,oy,s){
   const m={0:[ox,oy,0],90:[ox,oy+w,270],180:[ox+w,oy+h,180],270:[ox+h,oy,90]}[rot]||[ox,oy,0];
   page.drawPage(emb,{x:m[0],y:m[1],xScale:s,yScale:s,rotate:degrees(m[2])});
 }
-async function build(onlyIndex){
+const A4=[595.28,841.89], HALF=A4[1]/2;
+function perSheet(){return st.fmt==="2"?2:1;}
+function sheetCount(){const t=st.files.reduce((a,f)=>a+f.pages,0);return t?Math.ceil(t/perSheet()):0;}
+function cutLine(p){
+  p.drawLine({start:{x:14,y:HALF},end:{x:A4[0]-14,y:HALF},thickness:0.4,color:PDFLib.rgb(0.72,0.72,0.72),dashArray:[3,3]});
+}
+async function build(onlySheet){
   const out=await PDFDocument.create();
   const tpl=await PDFDocument.load(st.tpl,{ignoreEncryption:true});
   const tp=tpl.getPage(0), trot=norm(tp.getRotation().angle);
   const et=await out.embedPage(tp);
   const [W,H]=trot%180?[et.height,et.width]:[et.width,et.height];
-  const [PW,PH]=SIZES[st.fmt]||[W,H];
-  const sc=Math.min(PW/W,PH/H), cx=(PW-W*sc)/2, cy=(PH-H*sc)/2;
-  const ox=cx+st.dx*MM*sc, oy=cy+st.dy*MM*sc;
-  const labels=[];
-  if(!st.files.length){const p=out.addPage([PW,PH]);place(p,et,trot,cx,cy,sc);return{doc:out,labels:["Modulo vuoto"]};}
-  let idx=0;
+  const sc=Math.min(A4[0]/W,HALF/H), cx=(A4[0]-W*sc)/2, cyTop=HALF+(HALF-H*sc)/2, cyBot=(HALF-H*sc)/2;
+  const n=perSheet(), labels=[];
+  function slot(page,k){return k===0?cyTop:cyBot;}
+  if(!st.files.length){const p=out.addPage(A4);place(p,et,trot,cx,cyTop,sc);cutLine(p);return{doc:out,labels:["Modulo vuoto"],count:0};}
+  let idx=0,page=null,count=0;
   for(const f of st.files){
     const d=await PDFDocument.load(f.bytes,{ignoreEncryption:true});
     const pages=d.getPages();
     for(let i=0;i<pages.length;i++,idx++){
-      if(onlyIndex!=null&&idx!==onlyIndex)continue;
-      const ed=await out.embedPage(pages[i]);
-      const p=out.addPage([PW,PH]);
-      place(p,et,trot,cx,cy,sc);
-      place(p,ed,norm(pages[i].getRotation().angle),ox,oy,sc);
-      labels.push(f.name+(pages.length>1?" · pag. "+(i+1):""));
+      const sheet=Math.floor(idx/n), k=idx%n;
+      if(onlySheet!=null&&sheet!==onlySheet)continue;
+      if(k===0){page=out.addPage(A4);cutLine(page);}
+      const cy=slot(page,k);
+      place(page,et,trot,cx,cy,sc);
+      place(page,await out.embedPage(pages[i]),norm(pages[i].getRotation().angle),cx+st.dx*MM*sc,cy+st.dy*MM*sc,sc);
+      labels.push(f.name+(pages.length>1?" · pag. "+(i+1):""));count++;
     }
   }
-  return{doc:out,labels};
+  return{doc:out,labels,count};
 }
 
 let renderTok=0;
 async function renderPreview(){
   const tok=++renderTok;
-  st.total=st.files.reduce((a,f)=>a+f.pages,0);
+  st.total=sheetCount();
   if(st.page>=Math.max(st.total,1))st.page=Math.max(st.total-1,0);
   try{
+    if(!st.tpl)return;
     if(!st.tpl)return;
     const {doc,labels}=await build(st.total?st.page:null);
     const bytes=await doc.save();
@@ -232,17 +240,21 @@ async function renderPreview(){
     const pdf=await pdfjsLib.getDocument({data:bytes}).promise;
     const pg=await pdf.getPage(1);
     const cv=$("cv"), dpr=Math.min(window.devicePixelRatio||1,2);
-    const vp=pg.getViewport({scale:1.6*dpr});
+    const vp=pg.getViewport({scale:1.3*dpr});
     cv.width=vp.width;cv.height=vp.height;
     await pg.render({canvasContext:cv.getContext("2d"),viewport:vp}).promise;
     if(tok!==renderTok)return;
-    $("who").textContent=labels[0]||"";
-    $("pgLbl").textContent=st.total?(st.page+1)+" / "+st.total:"–";
+    $("who").textContent=labels.join(" + ")||"";
+    $("pgLbl").textContent=st.total?"Foglio "+(st.page+1)+" / "+st.total:"–";
     $("prev").disabled=!st.total||st.page===0;$("next").disabled=!st.total||st.page>=st.total-1;
   }catch(e){setStatus("Anteprima non disponibile: "+(e.message||e),"err");}
 }
 
 function setStatus(t,c){const s=$("status");s.textContent=t;s.className="status"+(c?" "+c:"");}
+function updateBtn(){
+  const tot=st.files.reduce((a,f)=>a+f.pages,0), sh=sheetCount();
+  $("makeBtn").textContent=tot?`Scarica PDF (${tot} bollettin${tot===1?"o":"i"} · ${sh} fogli${sh===1?"o":""})`:"Scarica PDF bollettini";
+}
 function renderFiles(){
   const ul=$("files");ul.innerHTML="";
   st.files.forEach((f,i)=>{
@@ -255,8 +267,7 @@ function renderFiles(){
   });
   $("noFiles").hidden=st.files.length>0;
   $("makeBtn").disabled=!st.files.length;
-  const tot=st.files.reduce((a,f)=>a+f.pages,0);
-  $("makeBtn").textContent=tot?`Scarica PDF (${tot} bollettin${tot===1?"o":"i"})`:"Scarica PDF bollettini";
+  updateBtn();
 }
 
 async function addFiles(list){
@@ -296,7 +307,7 @@ function offChanged(){
   try{localStorage.setItem("bollettini-off-v2",JSON.stringify({dx,dy}));}catch(e){}
   clearTimeout(t);t=setTimeout(renderPreview,200);
 }
-document.querySelectorAll('input[name=fmt]').forEach(r=>r.onchange=()=>{st.fmt=r.value;try{localStorage.setItem("bollettini-fmt",st.fmt);}catch(e){}renderPreview();});
+document.querySelectorAll('input[name=fmt]').forEach(r=>r.onchange=()=>{st.fmt=r.value;st.page=0;updateBtn();try{localStorage.setItem("bollettini-per",st.fmt);}catch(e){}renderPreview();});
 $("dx").oninput=offChanged;$("dy").oninput=offChanged;
 $("resetOff").onclick=()=>{$("dx").value=DEF.dx;$("dy").value=DEF.dy;offChanged();};
 
@@ -319,7 +330,7 @@ $("makeBtn").onclick=async()=>{
     const {doc,labels}=await build(null);
     const bytes=await doc.save();
     const d=new Date(),p=n=>String(n).padStart(2,"0");
-    const name=`Bollettini_${st.fmt}_${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}.pdf`;
+    const name=`Bollettini_${st.fmt}xA4_${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}.pdf`;
     const dl=window.claude&&window.claude.use?await window.claude.use("downloads"):null;
     if(dl){
       try{await dl.save({filename:name,data:new Blob([bytes],{type:"application/pdf"})});clearAll(`Salvato ${name} con ${labels.length} bollettin${labels.length===1?"o":"i"}.`);}
