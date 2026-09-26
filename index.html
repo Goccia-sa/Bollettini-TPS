@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Bollettini TPS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#f3f6f9; --surface:#ffffff; --ink:#15212c; --muted:#5b6b7a; --line:#d6dee6;
+  --accent:#1680c9; --accent-ink:#ffffff; --accent-soft:#e3f0fa; --ok:#1f7a4d; --err:#b3261e;
+  --paper:#ffffff; --shadow:0 1px 2px rgba(21,33,44,.06),0 4px 16px rgba(21,33,44,.06);
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;--bg:#0f161d;--surface:#17212b;--ink:#e6edf3;--muted:#93a4b4;--line:#2a3845;
+  --accent:#4aa8ea;--accent-ink:#06121c;--accent-soft:#16304a;--ok:#5cc58f;--err:#ff8a80;--shadow:none}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0f161d;--surface:#17212b;--ink:#e6edf3;--muted:#93a4b4;--line:#2a3845;
+  --accent:#4aa8ea;--accent-ink:#06121c;--accent-soft:#16304a;--ok:#5cc58f;--err:#ff8a80;--shadow:none}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:28px 48px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 24px;margin-bottom:24px}
+h1{font-size:26px;font-weight:600;margin:0;letter-spacing:-.01em;text-wrap:balance}
+h1 span{color:var(--accent)}
+.sub{color:var(--muted);margin:4px 0 0;max-width:60ch}
+.priv{font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center}
+.grid{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px}
+.col{display:flex;flex-direction:column;gap:16px}
+.step{display:flex;flex-direction:column;gap:12px}
+.step h2{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0;font-weight:600;display:flex;gap:8px;align-items:center}
+.step h2 b{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-size:11px;letter-spacing:0}
+.drop{border:1.5px dashed var(--line);border-radius:8px;padding:22px 14px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;color:var(--muted)}
+.drop strong{color:var(--ink);display:block;font-weight:500;margin-bottom:2px}
+.drop.over,.drop:hover{border-color:var(--accent);background:var(--accent-soft)}
+.drop:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.files{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.files li{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--line);border-radius:6px;font-size:14px}
+.files .name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.files .pg{font-family:var(--mono);font-size:12px;color:var(--muted);white-space:nowrap}
+.x{border:0;background:none;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;padding:2px 4px;border-radius:4px}
+.x:hover{color:var(--err)}
+.empty{font-size:13px;color:var(--muted);margin:0}
+.offs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label{font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+input[type=number]{font-family:var(--mono);font-size:15px;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);width:100%;font-variant-numeric:tabular-nums}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button{font-family:var(--sans);font-size:14px;cursor:pointer;border-radius:6px}
+.ghost{border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:7px 12px}
+.ghost:hover{border-color:var(--accent);color:var(--accent)}
+.primary{border:0;background:var(--accent);color:var(--accent-ink);padding:12px 16px;font-size:15px;font-weight:600;width:100%}
+.primary:disabled{opacity:.45;cursor:not-allowed}
+.hint{font-size:12.5px;color:var(--muted);margin:0}
+.status{font-size:13.5px;margin:0;min-height:1.4em}
+.status.ok{color:var(--ok)}.status.err{color:var(--err)}
+.preview{display:flex;flex-direction:column;gap:12px}
+.pvhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px}
+.pvhead h2{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0;font-weight:600}
+.pvhead .who{font-size:14px;color:var(--ink);font-weight:500}
+.nav{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:13px;color:var(--muted)}
+.stage{background:var(--bg);border-radius:8px;padding:14px;display:grid;place-items:center;min-height:300px}
+canvas{max-width:100%;height:auto;background:var(--paper);box-shadow:var(--shadow);border-radius:2px;display:block}
+.fmt{border:0;margin:0;padding:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.fmt legend{font-size:13px;color:var(--muted);float:left;margin-right:6px}
+.opt{flex-direction:row;cursor:pointer}
+.opt input{position:absolute;opacity:0;pointer-events:none}
+.opt span{display:inline-block;padding:6px 14px;border:1px solid var(--line);border-radius:6px;font-family:var(--mono);font-size:13px;color:var(--ink)}
+.opt input:checked+span{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:500}
+.opt input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+.adv{border-top:1px solid var(--line);padding-top:12px}
+.adv summary{cursor:pointer;font-size:13px;color:var(--muted)}
+.adv[open] summary{margin-bottom:10px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<style>body{margin:0}[hidden]{display:none!important}</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Bollettini <span>TPS</span></h1>
+      <p class="sub">Unisce i rapporti al modulo del rapporto di lavoro vuoto: ogni pagina diventa un bollettino A5 pronto da stampare o inviare.</p>
+    </div>
+    <p class="priv">I PDF vengono elaborati solo nel tuo browser e non vengono caricati da nessuna parte.</p>
+  </header>
+
+  <div class="grid">
+    <div class="col">
+      <section class="panel step" aria-labelledby="s1">
+        <h2 id="s1"><b>1</b> Rapporti</h2>
+        <div class="drop" id="drop" tabindex="0" role="button" aria-label="Scegli i PDF dei rapporti">
+          <strong>Trascina qui i PDF dei rapporti</strong>
+          oppure clicca per sceglierli · anche più file
+        </div>
+        <input type="file" id="fileIn" accept="application/pdf,.pdf" multiple hidden>
+        <ul class="files" id="files"></ul>
+        <p class="empty" id="noFiles">Nessun rapporto caricato.</p>
+      </section>
+
+      <section class="panel step" aria-labelledby="s2">
+        <h2 id="s2"><b>2</b> Crea il bollettino</h2>
+        <fieldset class="fmt"><legend>Formato</legend>
+          <label class="opt"><input type="radio" name="fmt" id="fmtA5" value="A5" checked><span>A5</span></label>
+          <label class="opt"><input type="radio" name="fmt" id="fmtA4" value="A4"><span>A4</span></label>
+        </fieldset>
+        <button class="primary" id="makeBtn" disabled>Scarica PDF bollettini</button>
+        <p class="status" id="status" aria-live="polite"></p>
+
+        <details class="adv" id="adv">
+          <summary>Regola posizione e modulo</summary>
+          <div class="step">
+            <p class="hint">Sposta il testo del rapporto sul modulo. Valori positivi: verso destra e verso l'alto.</p>
+            <div class="offs">
+              <label for="dx">Orizzontale (mm)<input type="number" id="dx" step="0.5"></label>
+              <label for="dy">Verticale (mm)<input type="number" id="dy" step="0.5"></label>
+            </div>
+            <div class="row">
+              <button class="ghost" id="resetOff">Ripristina posizione</button>
+            </div>
+            <p class="hint" id="tplInfo">Modulo: Bollettino TPS vuoto.pdf</p>
+            <div class="row">
+              <button class="ghost" id="tplBtn">Cambia modulo vuoto…</button>
+              <button class="ghost" id="tplReset" hidden>Usa modulo originale</button>
+            </div>
+            <input type="file" id="tplIn" accept="application/pdf,.pdf" hidden>
+          </div>
+        </details>
+      </section>
+    </div>
+
+    <section class="panel preview" aria-labelledby="pv">
+      <div class="pvhead">
+        <div><h2 id="pv">Anteprima</h2><div class="who" id="who">Modulo vuoto</div></div>
+        <div class="nav">
+          <button class="ghost" id="prev" aria-label="Pagina precedente">‹</button>
+          <span id="pgLbl">–</span>
+          <button class="ghost" id="next" aria-label="Pagina successiva">›</button>
+        </div>
+      </div>
+      <div class="stage"><canvas id="cv" width="728" height="516"></canvas></div>
+    </section>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js"></script>
+<script>
+(function(){
+
+const MM=72/25.4, DEF={dx:48.7,dy:22.2};
+const SIZES={A5:[595.28,419.53],A4:[841.89,595.28]};
+const {PDFDocument,degrees}=PDFLib;
+try{pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";}catch(e){}
+
+const $=id=>document.getElementById(id);
+const st={files:[],tpl:null,tplName:"Bollettino TPS vuoto.pdf",custom:false,page:0,total:0,dx:DEF.dx,dy:DEF.dy,fmt:"A5"};
+function b64ToBytes(b){const s=atob(b),u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return u;}
+let ORIG=null;
+
+try{const s=JSON.parse(localStorage.getItem("bollettini-off")||"null");if(s&&isFinite(s.dx)&&isFinite(s.dy)){st.dx=s.dx;st.dy=s.dy;}}catch(e){}
+$("dx").value=st.dx;$("dy").value=st.dy;
+try{const f=localStorage.getItem("bollettini-fmt");if(SIZES[f])st.fmt=f;}catch(e){}
+$("fmt"+st.fmt).checked=true;
+
+function norm(a){return((a%360)+360)%360;}
+function place(page,emb,rot,ox,oy,s){
+  s=s||1;const w=emb.width*s,h=emb.height*s;
+  const m={0:[ox,oy,0],90:[ox,oy+w,270],180:[ox+w,oy+h,180],270:[ox+h,oy,90]}[rot]||[ox,oy,0];
+  page.drawPage(emb,{x:m[0],y:m[1],xScale:s,yScale:s,rotate:degrees(m[2])});
+}
+async function build(onlyIndex){
+  const out=await PDFDocument.create();
+  const tpl=await PDFDocument.load(st.tpl,{ignoreEncryption:true});
+  const tp=tpl.getPage(0), trot=norm(tp.getRotation().angle);
+  const et=await out.embedPage(tp);
+  const [W,H]=trot%180?[et.height,et.width]:[et.width,et.height];
+  const [PW,PH]=SIZES[st.fmt]||[W,H];
+  const sc=Math.min(PW/W,PH/H), cx=(PW-W*sc)/2, cy=(PH-H*sc)/2;
+  const ox=cx+st.dx*MM*sc, oy=cy+st.dy*MM*sc;
+  const labels=[];
+  if(!st.files.length){const p=out.addPage([PW,PH]);place(p,et,trot,cx,cy,sc);return{doc:out,labels:["Modulo vuoto"]};}
+  let idx=0;
+  for(const f of st.files){
+    const d=await PDFDocument.load(f.bytes,{ignoreEncryption:true});
+    const pages=d.getPages();
+    for(let i=0;i<pages.length;i++,idx++){
+      if(onlyIndex!=null&&idx!==onlyIndex)continue;
+      const ed=await out.embedPage(pages[i]);
+      const p=out.addPage([PW,PH]);
+      place(p,et,trot,cx,cy,sc);
+      place(p,ed,norm(pages[i].getRotation().angle),ox,oy,sc);
+      labels.push(f.name+(pages.length>1?" · pag. "+(i+1):""));
+    }
+  }
+  return{doc:out,labels};
+}
+
+let renderTok=0;
+async function renderPreview(){
+  const tok=++renderTok;
+  st.total=st.files.reduce((a,f)=>a+f.pages,0);
+  if(st.page>=Math.max(st.total,1))st.page=Math.max(st.total-1,0);
+  try{
+    if(!st.tpl)return;
+    const {doc,labels}=await build(st.total?st.page:null);
+    const bytes=await doc.save();
+    if(tok!==renderTok)return;
+    const pdf=await pdfjsLib.getDocument({data:bytes}).promise;
+    const pg=await pdf.getPage(1);
+    const cv=$("cv"), dpr=Math.min(window.devicePixelRatio||1,2);
+    const vp=pg.getViewport({scale:1.6*dpr});
+    cv.width=vp.width;cv.height=vp.height;
+    await pg.render({canvasContext:cv.getContext("2d"),viewport:vp}).promise;
+    if(tok!==renderTok)return;
+    $("who").textContent=labels[0]||"";
+    $("pgLbl").textContent=st.total?(st.page+1)+" / "+st.total:"–";
+    $("prev").disabled=!st.total||st.page===0;$("next").disabled=!st.total||st.page>=st.total-1;
+  }catch(e){setStatus("Anteprima non disponibile: "+(e.message||e),"err");}
+}
+
+function setStatus(t,c){const s=$("status");s.textContent=t;s.className="status"+(c?" "+c:"");}
+function renderFiles(){
+  const ul=$("files");ul.innerHTML="";
+  st.files.forEach((f,i)=>{
+    const li=document.createElement("li");
+    const n=document.createElement("span");n.className="name";n.textContent=f.name;n.title=f.name;
+    const p=document.createElement("span");p.className="pg";p.textContent=f.pages+(f.pages===1?" pagina":" pagine");
+    const x=document.createElement("button");x.className="x";x.textContent="×";x.setAttribute("aria-label","Rimuovi "+f.name);
+    x.onclick=()=>{st.files.splice(i,1);renderFiles();renderPreview();};
+    li.append(n,p,x);ul.append(li);
+  });
+  $("noFiles").hidden=st.files.length>0;
+  $("makeBtn").disabled=!st.files.length;
+  const tot=st.files.reduce((a,f)=>a+f.pages,0);
+  $("makeBtn").textContent=tot?`Scarica PDF (${tot} bollettin${tot===1?"o":"i"})`:"Scarica PDF bollettini";
+}
+
+async function addFiles(list){
+  const errs=[];
+  for(const file of list){
+    if(!/\.pdf$/i.test(file.name)&&file.type!=="application/pdf"){errs.push(file.name+" non è un PDF");continue;}
+    try{
+      const bytes=new Uint8Array(await file.arrayBuffer());
+      const d=await PDFDocument.load(bytes,{ignoreEncryption:true});
+      st.files.push({name:file.name,bytes,pages:d.getPageCount()});
+    }catch(e){errs.push(file.name+" non si apre");}
+  }
+  setStatus(errs.length?errs.join(" · "):"",errs.length?"err":"");
+  renderFiles();
+  if(st.files.length)st.page=Math.max(0,st.files.reduce((a,f)=>a+f.pages,0)-st.files[st.files.length-1].pages);
+  renderPreview();
+}
+
+const drop=$("drop");
+drop.onclick=()=>$("fileIn").click();
+drop.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();$("fileIn").click();}};
+$("fileIn").onchange=e=>{addFiles([...e.target.files]);e.target.value="";};
+["dragenter","dragover"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add("over");}));
+["dragleave","drop"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove("over");}));
+drop.addEventListener("drop",e=>addFiles([...e.dataTransfer.files]));
+document.addEventListener("dragover",e=>e.preventDefault());
+document.addEventListener("drop",e=>{if(!drop.contains(e.target)){e.preventDefault();if(e.dataTransfer.files.length)addFiles([...e.dataTransfer.files]);}});
+
+$("prev").onclick=()=>{if(st.page>0){st.page--;renderPreview();}};
+$("next").onclick=()=>{if(st.page<st.total-1){st.page++;renderPreview();}};
+
+let t;
+function offChanged(){
+  const dx=parseFloat($("dx").value),dy=parseFloat($("dy").value);
+  if(!isFinite(dx)||!isFinite(dy))return;
+  st.dx=dx;st.dy=dy;
+  try{localStorage.setItem("bollettini-off",JSON.stringify({dx,dy}));}catch(e){}
+  clearTimeout(t);t=setTimeout(renderPreview,200);
+}
+document.querySelectorAll('input[name=fmt]').forEach(r=>r.onchange=()=>{st.fmt=r.value;try{localStorage.setItem("bollettini-fmt",st.fmt);}catch(e){}renderPreview();});
+$("dx").oninput=offChanged;$("dy").oninput=offChanged;
+$("resetOff").onclick=()=>{$("dx").value=DEF.dx;$("dy").value=DEF.dy;offChanged();};
+
+$("tplBtn").onclick=()=>$("tplIn").click();
+$("tplIn").onchange=async e=>{
+  const f=e.target.files[0];e.target.value="";if(!f)return;
+  try{const b=new Uint8Array(await f.arrayBuffer());await PDFDocument.load(b,{ignoreEncryption:true});
+    st.tpl=b;st.tplName=f.name;st.custom=true;$("tplInfo").textContent="Modulo: "+f.name+" (solo per questa sessione)";$("tplReset").hidden=false;renderPreview();}
+  catch(err){setStatus(f.name+" non è un PDF valido","err");}
+};
+$("tplReset").onclick=()=>{st.tpl=ORIG;st.custom=false;$("tplInfo").textContent="Modulo: Bollettino TPS vuoto.pdf";$("tplReset").hidden=true;renderPreview();};
+
+$("makeBtn").onclick=async()=>{
+  const btn=$("makeBtn");if(!st.tpl){setStatus("Modulo vuoto non caricato.","err");return;}btn.disabled=true;setStatus("Creo il PDF…");
+  try{
+    const {doc,labels}=await build(null);
+    const bytes=await doc.save();
+    const d=new Date(),p=n=>String(n).padStart(2,"0");
+    const name=`Bollettini_${st.fmt}_${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}.pdf`;
+    const dl=window.claude&&window.claude.use?await window.claude.use("downloads"):null;
+    if(dl){
+      try{await dl.save({filename:name,data:new Blob([bytes],{type:"application/pdf"})});setStatus(`Salvato ${name} con ${labels.length} bollettin${labels.length===1?"o":"i"}.`,"ok");}
+      catch(err){setStatus(err&&err.code==="declined"?"Salvataggio annullato.":"Salvataggio non riuscito: "+(err&&err.message||err),err&&err.code==="declined"?"":"err");}
+    }else{
+      const url=URL.createObjectURL(new Blob([bytes],{type:"application/pdf"}));
+      const a=document.createElement("a");a.href=url;a.download=name;document.body.append(a);a.click();a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),5000);
+      setStatus(`Creato ${name}.`,"ok");
+    }
+  }catch(e){setStatus("Errore nella creazione: "+(e.message||e),"err");}
+  btn.disabled=!st.files.length;
+};
+
+renderFiles();
+fetch("bollettino-vuoto.pdf").then(r=>{if(!r.ok)throw new Error(r.status);return r.arrayBuffer();})
+ .then(b=>{ORIG=new Uint8Array(b);if(!st.custom)st.tpl=ORIG;renderPreview();})
+ .catch(()=>setStatus("Modulo vuoto non trovato: il file bollettino-vuoto.pdf deve stare accanto a index.html.","err"));
+})();
+</script>
+
+</body>
+</html>
