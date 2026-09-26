@@ -156,7 +156,7 @@ canvas{max-width:100%;height:auto;background:var(--paper);box-shadow:var(--shado
 <script>
 (function(){
 
-const MM=72/25.4, DEF={dx:48.7,dy:22.2};
+const MM=72/25.4, DEF={dx:24.8,dy:16.6};
 const SIZES={A5:[595.28,419.53],A4:[841.89,595.28]};
 const {PDFDocument,degrees}=PDFLib;
 try{pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";}catch(e){}
@@ -166,7 +166,7 @@ const st={files:[],tpl:null,tplName:"Bollettino TPS vuoto.pdf",custom:false,page
 function b64ToBytes(b){const s=atob(b),u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return u;}
 let ORIG=null;
 
-try{const s=JSON.parse(localStorage.getItem("bollettini-off")||"null");if(s&&isFinite(s.dx)&&isFinite(s.dy)){st.dx=s.dx;st.dy=s.dy;}}catch(e){}
+try{const s=JSON.parse(localStorage.getItem("bollettini-off-v2")||"null");if(s&&isFinite(s.dx)&&isFinite(s.dy)){st.dx=s.dx;st.dy=s.dy;}}catch(e){}
 $("dx").value=st.dx;$("dy").value=st.dy;
 try{const f=localStorage.getItem("bollettini-fmt");if(SIZES[f])st.fmt=f;}catch(e){}
 $("fmt"+st.fmt).checked=true;
@@ -278,7 +278,7 @@ function offChanged(){
   const dx=parseFloat($("dx").value),dy=parseFloat($("dy").value);
   if(!isFinite(dx)||!isFinite(dy))return;
   st.dx=dx;st.dy=dy;
-  try{localStorage.setItem("bollettini-off",JSON.stringify({dx,dy}));}catch(e){}
+  try{localStorage.setItem("bollettini-off-v2",JSON.stringify({dx,dy}));}catch(e){}
   clearTimeout(t);t=setTimeout(renderPreview,200);
 }
 document.querySelectorAll('input[name=fmt]').forEach(r=>r.onchange=()=>{st.fmt=r.value;try{localStorage.setItem("bollettini-fmt",st.fmt);}catch(e){}renderPreview();});

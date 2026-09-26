@@ -24,11 +24,11 @@ Il rapporto è come un foglio trasparente con solo il testo, appoggiato sopra il
 - **Orizzontale (mm):** numero più alto → testo **a destra**; più basso → **a sinistra**.
 - **Verticale (mm):** numero più alto → testo **in alto**; più basso → **in basso**.
 
-L'anteprima si aggiorna subito mentre cambi il numero. Esempio: se le date stanno 2 mm troppo in basso rispetto alle caselle Lu–Do, porta il verticale da 22.2 a 24.2.
+L'anteprima si aggiorna subito mentre cambi il numero. Esempio: se le date stanno 2 mm troppo in basso rispetto alle caselle Lu–Do, porta il verticale da 16.6 a 18.6.
 
-I millimetri si riferiscono al modulo originale (un po' più grande dell'A5): prova, guarda l'anteprima e aggiusta.
+I millimetri si riferiscono al modulo a grandezza piena (un po' più grande dell'A5): prova, guarda l'anteprima e aggiusta.
 
-- **Ripristina posizione** riporta i valori di partenza: 48.7 (orizzontale) e 22.2 (verticale).
+- **Ripristina posizione** riporta i valori di partenza: 24.8 (orizzontale) e 16.6 (verticale).
 - La correzione resta salvata **solo nel browser di chi la fa**: non cambia per gli altri colleghi.
 
 ### 2. Usare un altro modulo vuoto
@@ -41,4 +41,4 @@ Con una scansione nuova il modulo potrebbe essere leggermente spostato o storto:
 ## Aggiornare il sito (per chi gestisce la repository)
 
 - **Cambiare il modulo per tutti:** nella repository clicca **Add file → Upload files**, carica il nuovo PDF con lo **stesso nome** `bollettino-vuoto.pdf` e clicca **Commit changes**. Il sito si aggiorna in 1–2 minuti.
-- **Cambiare la posizione di partenza per tutti:** i valori predefiniti sono in `index.html`, nella riga `DEF={dx:48.7,dy:22.2}` (dx = orizzontale, dy = verticale, in mm). Modificali e salva con **Commit changes**.
+- **Cambiare la posizione di partenza per tutti:** i valori predefiniti sono in `index.html`, nella riga `DEF={dx:24.8,dy:16.6}` (dx = orizzontale, dy = verticale, in mm). Modificali e salva con **Commit changes**.
