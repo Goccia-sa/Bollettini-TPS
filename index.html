@@ -251,6 +251,7 @@ function cutLine(p){
 }
 async function build(onlySheet){
   const out=await PDFDocument.create();
+  out.setTitle("Bollettini TPS");out.setCreator("Bollettini TPS");
   const tpl=await PDFDocument.load(st.tpl,{ignoreEncryption:true});
   const tp=tpl.getPage(0), trot=norm(tp.getRotation().angle);
   const et=await out.embedPage(tp);
@@ -414,6 +415,12 @@ function renderFiles(){
   updateBtn();
 }
 
+async function isBollettino(d,bytes){
+  try{if((d.getTitle()||"")==="Bollettini TPS"||(d.getCreator()||"")==="Bollettini TPS")return true;}catch(e){}
+  try{const pdf=await pdfjsLib.getDocument({data:bytes.slice(0)}).promise;const pg=await pdf.getPage(1);
+    const tc=await pg.getTextContent();const txt=tc.items.map(i=>i.str).join(" ").toUpperCase();
+    pdf.destroy();return txt.includes("RAPPORTO DI LAVORO")&&txt.includes("NUMERO SETTIMANA");}catch(e){return false;}
+}
 async function addFiles(list){
   const errs=[];
   for(const file of list){
@@ -421,6 +428,7 @@ async function addFiles(list){
     try{
       const bytes=new Uint8Array(await file.arrayBuffer());
       const d=await PDFDocument.load(bytes,{ignoreEncryption:true});
+      if(await isBollettino(d,bytes)){errs.push(`«${file.name}» è già un bollettino creato con questa pagina: carica il PDF del rapporto originale`);continue;}
       st.files.push({id:st.nextId++,name:file.name,bytes,pages:d.getPageCount()});
     }catch(e){errs.push(file.name+" non si apre");}
   }
