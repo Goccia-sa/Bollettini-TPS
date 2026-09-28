@@ -10,8 +10,9 @@ Pagina web che sovrappone i rapporti (PDF) al modulo del rapporto di lavoro TPS 
 
 1. Trascina i PDF dei rapporti nel riquadro (anche più file; ogni pagina diventa un bollettino).
 2. Controlla l'anteprima a destra (frecce ‹ › per scorrere le pagine).
-3. Scegli **1 per foglio** (bollettino nella metà alta del foglio A4) o **2 per foglio** (due bollettini uno sotto l'altro) e clicca **Scarica PDF**.
-4. In stampa scegli carta **A4 verticale** e **Dimensioni effettive / 100%**. La linea tratteggiata a metà foglio indica dove tagliare per avere il bollettino A5.
+3. *(Facoltativo)* Nel riquadro **Compila ore e luogo** scegli il bollettino e inserisci cantiere/oggetto, orari (mattino e pomeriggio, dalle/alle), luogo di lavoro e centro di costo. Gli orari si possono scrivere anche veloci: `7` → 07:00, `1730` o `17.30` → 17:30. Totale del giorno e della settimana sono calcolati in centesimi (7:30 → 7.50), senza supplementi; un turno oltre la mezzanotte (22:00–06:00) conta normalmente (8 ore). Luogo e centro di costo "della settimana" vengono stampati nei giorni con ore; un valore scritto nel singolo giorno ha la precedenza. **Copia gli orari di Lu su Ma–Ve** velocizza le settimane uguali.
+4. Scegli **1 per foglio** (bollettino nella metà alta del foglio A4) o **2 per foglio** (due bollettini uno sotto l'altro) e clicca **Scarica PDF**.
+5. In stampa scegli carta **A4 verticale** e **Dimensioni effettive / 100%**. La linea tratteggiata a metà foglio indica dove tagliare per avere il bollettino A5.
 
 ## Regola posizione e modulo
 
