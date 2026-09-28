@@ -146,11 +146,7 @@ canvas{max-width:100%;max-height:78vh;width:auto;height:auto;background:var(--pa
 
       <section class="panel step" aria-labelledby="s2">
         <h2 id="s2"><b>2</b> Crea il bollettino</h2>
-        <fieldset class="fmt"><legend>Su foglio A4</legend>
-          <label class="opt"><input type="radio" name="fmt" id="fmt1" value="1" checked><span>1 per foglio</span></label>
-          <label class="opt"><input type="radio" name="fmt" id="fmt2" value="2"><span>2 per foglio</span></label>
-        </fieldset>
-        <p class="hint">Bollettino in formato A5. Stampa su A4 verticale con dimensioni effettive (100%); la linea tratteggiata indica dove tagliare.</p>
+        <p class="hint">Un bollettino A5 per foglio, nella metà alta del foglio A4. Stampa su A4 verticale con dimensioni effettive (100%); la linea tratteggiata indica dove tagliare.</p>
         <button class="primary" id="makeBtn" disabled>Scarica PDF bollettini</button>
         <p class="status" id="status" aria-live="polite"></p>
 
@@ -234,17 +230,20 @@ function applyMode(){
 }
 applyMode();
 window.addEventListener("hashchange",()=>{applyMode();renderPreview();});
-try{const f=localStorage.getItem("bollettini-per");if(f==="1"||f==="2")st.fmt=f;}catch(e){}
-$("fmt"+st.fmt).checked=true;
+
 
 function norm(a){return((a%360)+360)%360;}
-function place(page,emb,rot,ox,oy,s){
-  s=s||1;const w=emb.width*s,h=emb.height*s;
+function place(page,emb,rot,ox,oy,s,sy){
+  s=s||1;
+  if(rot===0&&sy){page.drawPage(emb,{x:ox,y:oy,xScale:s,yScale:sy});return;}
+  if(sy)s=Math.min(s,sy);
+  const w=emb.width*s,h=emb.height*s;
   const m={0:[ox,oy,0],90:[ox,oy+w,270],180:[ox+w,oy+h,180],270:[ox+h,oy,90]}[rot]||[ox,oy,0];
   page.drawPage(emb,{x:m[0],y:m[1],xScale:s,yScale:s,rotate:degrees(m[2])});
 }
 const A4=[595.28,841.89], HALF=A4[1]/2;
-function perSheet(){return st.fmt==="2"?2:1;}
+function perSheet(){return 1;}
+const MARGIN=5*MM, CONTENT={x:86.2,y:53.2,w:556.0,h:409.4}; // area del modulo vettoriale (pt)
 function sheetCount(){const t=st.files.reduce((a,f)=>a+f.pages,0);return t?Math.ceil(t/perSheet()):0;}
 function cutLine(p){
   p.drawLine({start:{x:14,y:HALF},end:{x:A4[0]-14,y:HALF},thickness:0.4,color:PDFLib.rgb(0.72,0.72,0.72),dashArray:[3,3]});
@@ -256,11 +255,16 @@ async function build(onlySheet){
   const tp=tpl.getPage(0), trot=norm(tp.getRotation().angle);
   const et=await out.embedPage(tp);
   const [W,H]=trot%180?[et.height,et.width]:[et.width,et.height];
-  const sc=Math.min(A4[0]/W,HALF/H), cx=(A4[0]-W*sc)/2, cyTop=HALF+(HALF-H*sc)/2, cyBot=(HALF-H*sc)/2;
+  const cb=st.custom?{x:0,y:0,w:W,h:H}:CONTENT;
+  const aw=A4[0]-2*MARGIN, ah=HALF-2*MARGIN;
+  let sx=aw/cb.w, sy=ah/cb.h;
+  if(trot!==0||st.custom){sx=sy=Math.min(sx,sy);}   // riempimento A5 solo col modulo standard
+  const sc=sy, cx=MARGIN+(aw-cb.w*sx)/2-cb.x*sx;
+  const cyTop=HALF+MARGIN+(ah-cb.h*sy)/2-cb.y*sy, cyBot=MARGIN+(ah-cb.h*sy)/2-cb.y*sy;
   const n=perSheet(), labels=[];
   const fR=await out.embedFont(PDFLib.StandardFonts.Helvetica), fB=await out.embedFont(PDFLib.StandardFonts.HelveticaBold);
   function slot(page,k){return k===0?cyTop:cyBot;}
-  if(!st.files.length){const p=out.addPage(A4);place(p,et,trot,cx,cyTop,sc);cutLine(p);return{doc:out,labels:["Modulo vuoto"],count:0};}
+  if(!st.files.length){const p=out.addPage(A4);place(p,et,trot,cx,cyTop,sx,sy);cutLine(p);return{doc:out,labels:["Modulo vuoto"],count:0};}
   let idx=0,page=null,count=0;
   for(const f of st.files){
     const d=await PDFDocument.load(f.bytes,{ignoreEncryption:true});
@@ -270,9 +274,9 @@ async function build(onlySheet){
       if(onlySheet!=null&&sheet!==onlySheet)continue;
       if(k===0){page=out.addPage(A4);cutLine(page);}
       const cy=slot(page,k);
-      place(page,et,trot,cx,cy,sc);
-      place(page,await out.embedPage(pages[i]),norm(pages[i].getRotation().angle),cx+st.dx*MM*sc,cy+st.dy*MM*sc,sc);
-      const fd=st.fill[f.id+":"+i]; if(fd)drawFill(page,fd,cx,cy,sc,fR,fB);
+      place(page,et,trot,cx,cy,sx,sy);
+      place(page,await out.embedPage(pages[i]),norm(pages[i].getRotation().angle),cx+st.dx*MM*sx,cy+st.dy*MM*sy,sx,sy);
+      const fd=st.fill[f.id+":"+i]; if(fd)drawFill(page,fd,cx,cy,sy,fR,fB,sx);
       labels.push(f.name+(pages.length>1?" · pag. "+(i+1):""));count++;
     }
   }
@@ -288,13 +292,13 @@ function mins(t){if(!t)return null;const m=/^(\d{1,2}):(\d{2})/.exec(t);return m
 function span(a,b){const x=mins(a),y=mins(b);if(x==null||y==null)return 0;let d=y-x;if(d<=0)d+=1440;return d;}
 function dayMin(d){return span(d.m1,d.m2)+span(d.p1,d.p2);}
 function dec(m){return (m/60).toFixed(2);}
-function fitText(page,txt,font,size,x0,w,base,align,sc,cx,cy,minSize){
+function fitText(page,txt,font,size,x0,w,base,align,sc,cx,cy,minSize,sxx){
   txt=String(txt||"").trim(); if(!txt)return;
   let sz=size; while(sz>(minSize||4.5)&&font.widthOfTextAtSize(txt,sz)>w-2)sz-=0.25;
   while(txt.length>1&&font.widthOfTextAtSize(txt,sz)>w-2)txt=txt.slice(0,-2)+"…";
   const tw=font.widthOfTextAtSize(txt,sz);
   const x=align==="l"?x0+1:x0+(w-tw)/2;
-  page.drawText(txt,{x:cx+x*sc,y:cy+(base-0.35*sz)*sc,size:sz*sc,font,color:PDFLib.rgb(0.05,0.05,0.35)});
+  page.drawText(txt,{x:cx+x*(sxx||SX||sc),y:cy+(base-0.35*sz)*sc,size:sz*sc,font,color:PDFLib.rgb(0.05,0.05,0.35)});
 }
 function twoLines(page,txt,font,x0,w,mid,sc,cx,cy){
   txt=String(txt||"").trim(); if(!txt)return;
@@ -306,7 +310,9 @@ function twoLines(page,txt,font,x0,w,mid,sc,cx,cy){
   fitText(page,a,font,size,x0,w,mid+4.3,"c",sc,cx,cy);
   fitText(page,rest.join(" "),font,size,x0,w,mid-4.3,"c",sc,cx,cy);
 }
-function drawFill(page,fd,cx,cy,sc,fR,fB){
+let SX=null;
+function drawFill(page,fd,cx,cy,sc,fR,fB,sx){
+  SX=sx||sc;
   if(fd.cant)fitText(page,fd.cant,fR,9,FX.cant[0],FX.cant[1]-FX.cant[0],FX.cant[2]+3.1,"l",sc,cx,cy,5);
   let week=0;
   fd.days.forEach((d,i)=>{
@@ -390,15 +396,15 @@ async function renderPreview(){
     await pg.render({canvasContext:cv.getContext("2d"),viewport:vp}).promise;
     if(tok!==renderTok)return;
     $("who").textContent=labels.join(" + ")||"";
-    $("pgLbl").textContent=st.total?"Foglio "+(st.page+1)+" / "+st.total:"–";
+    $("pgLbl").textContent=st.total?(st.page+1)+" / "+st.total:"–";
     $("prev").disabled=!st.total||st.page===0;$("next").disabled=!st.total||st.page>=st.total-1;
   }catch(e){setStatus("Anteprima non disponibile: "+(e.message||e),"err");}
 }
 
 function setStatus(t,c){const s=$("status");s.textContent=t;s.className="status"+(c?" "+c:"");}
 function updateBtn(){
-  const tot=st.files.reduce((a,f)=>a+f.pages,0), sh=sheetCount();
-  $("makeBtn").textContent=tot?`Scarica PDF (${tot} bollettin${tot===1?"o":"i"} · ${sh} fogli${sh===1?"o":""})`:"Scarica PDF bollettini";
+  const tot=st.files.reduce((a,f)=>a+f.pages,0);
+  $("makeBtn").textContent=tot?`Scarica PDF (${tot} bollettin${tot===1?"o":"i"})`:"Scarica PDF bollettini";
 }
 function renderFiles(){
   const ul=$("files");ul.innerHTML="";
@@ -460,7 +466,7 @@ function offChanged(){
   try{localStorage.setItem("bollettini-off-v2",JSON.stringify({dx,dy}));}catch(e){}
   clearTimeout(t);t=setTimeout(renderPreview,200);
 }
-document.querySelectorAll('input[name=fmt]').forEach(r=>r.onchange=()=>{st.fmt=r.value;st.page=0;updateBtn();try{localStorage.setItem("bollettini-per",st.fmt);}catch(e){}renderPreview();});
+
 $("dx").oninput=offChanged;$("dy").oninput=offChanged;
 $("resetOff").onclick=()=>{$("dx").value=DEF.dx;$("dy").value=DEF.dy;offChanged();};
 
@@ -483,7 +489,7 @@ $("makeBtn").onclick=async()=>{
     const {doc,labels}=await build(null);
     const bytes=await doc.save();
     const d=new Date(),p=n=>String(n).padStart(2,"0");
-    const name=`Bollettini_${st.fmt}xA4_${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}.pdf`;
+    const name=`Bollettini_${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}.pdf`;
     const dl=window.claude&&window.claude.use?await window.claude.use("downloads"):null;
     if(dl){
       try{await dl.save({filename:name,data:new Blob([bytes],{type:"application/pdf"})});clearAll(`Salvato ${name} con ${labels.length} bollettin${labels.length===1?"o":"i"}.`);}
